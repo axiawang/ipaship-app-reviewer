@@ -100,6 +100,7 @@ function parseMultipartStream(
     let provider = 'anthropic';
     let model = '';
     let context = '';
+    let nvidiaApiKey = '';
     let fileReceived = false;
     let totalBytes = 0;
     let rejected = false;
@@ -166,6 +167,7 @@ function parseMultipartStream(
     // Handle text fields
     busboy.on('field', (fieldname: string, val: string) => {
       if (fieldname === 'claudeApiKey' || fieldname === 'apiKey') apiKey = val;
+      if (fieldname === 'nvidiaApiKey') nvidiaApiKey = val;
       if (fieldname === 'provider') provider = val;
       if (fieldname === 'model') model = val;
       if (fieldname === 'context') context = val;
@@ -453,8 +455,8 @@ export async function POST(req: NextRequest) {
 
     // Stream-parse the multipart upload — writes file directly to disk
     // without ever loading the full file into memory
-    const { filePath, fileName, provider, model, context } = await parseMultipartStream(req, tempDir);
-    const resolvedApiKey = process.env.NVIDIA_KEY || process.env.NEXT_PUBLIC_API_KEY || '';
+    const { filePath, fileName, provider, model, context, nvidiaApiKey } = await parseMultipartStream(req, tempDir);
+    const resolvedApiKey = nvidiaApiKey || process.env.NVIDIA_KEY || process.env.NEXT_PUBLIC_API_KEY || '';
 
     if (!resolvedApiKey || !resolvedApiKey.trim()) {
       return NextResponse.json({ error: 'API key is required in environment variables' }, { status: 500 });
